@@ -27,10 +27,10 @@ def discriminator(input_disc, kernel, reuse, is_train=True):
     batch_size = 1
     div_patches = 4
     num_patches = 8
-    img_width = 128
-    img_height = 128
-    img_depth = 92
-    with tf.compat.v1.variable_scope("SRGAN_d", reuse=reuse):
+    img_width = 1024
+    img_height = 512
+    img_depth = 76
+    with tf.variable_scope("SRGAN_d", reuse=reuse):
         tl.layers.set_name_reuse(reuse)
         input_disc.set_shape([int((batch_size * num_patches) / div_patches), img_width, img_height, img_depth, 1], )
         x = InputLayer(input_disc, name='in')
@@ -83,7 +83,7 @@ def generator(input_gen, kernel, nb, upscaling_factor, reuse, feature_size, img_
     w_init_subpixel2 = zoom(w_init_subpixel2, [2, 2, 2, 1, 1], order=0)
     w_init_subpixel2_last = tf.constant_initializer(w_init_subpixel2)
 
-    with tf.compat.v1.variable_scope("SRGAN_g", reuse=reuse):
+    with tf.variable_scope("SRGAN_g", reuse=reuse):
         tl.layers.set_name_reuse(reuse)
         x = InputLayer(input_gen, name='in')
         x = Conv3dLayer(x, shape=[kernel, kernel, kernel, 1, feature_size], strides=[1, 1, 1, 1, 1],
@@ -208,13 +208,13 @@ def train(upscaling_factor, residual_blocks, feature_size, path_prediction, chec
     num_patches = traindataset.num_patches
 
     # ##========================== DEFINE MODEL ============================##
-    t_input_gen = tf.compat.v1.placeholder('float32', [int((batch_size * num_patches) / div_patches), None,
+    t_input_gen = tf.placeholder('float32', [int((batch_size * num_patches) / div_patches), None,
                                              None, None, 1],
                                  name='t_image_input_to_SRGAN_generator')
-    t_target_image = tf.compat.v1.placeholder('float32', [int((batch_size * num_patches) / div_patches),
+    t_target_image = tf.placeholder('float32', [int((batch_size * num_patches) / div_patches),
                                                 img_width, img_height, img_depth, 1],
                                     name='t_target_image')
-    t_input_mask = tf.compat.v1.placeholder('float32', [int((batch_size * num_patches) / div_patches),
+    t_input_mask = tf.placeholder('float32', [int((batch_size * num_patches) / div_patches),
                                               img_width, img_height, img_depth, 1],
                                   name='t_image_input_mask')
 
@@ -269,7 +269,7 @@ def train(upscaling_factor, residual_blocks, feature_size, path_prediction, chec
     g_vars = tl.layers.get_variables_with_name('SRGAN_g', True, True)
     d_vars = tl.layers.get_variables_with_name('SRGAN_d', True, True)
 
-    with tf.compat.v1.variable_scope('learning_rate'):
+    with tf.variable_scope('learning_rate'):
         lr_v = tf.Variable(1e-4, trainable=False)
     global_step = tf.Variable(0, trainable=False)
     decay_rate = 0.5
@@ -397,7 +397,7 @@ def evaluate(upsampling_factor, residual_blocks, feature_size, checkpoint_dir_re
     num_patches = traindataset.num_patches
 
     # define model
-    t_input_gen = tf.compat.v1.placeholder('float32', [1, None, None, None, 1],
+    t_input_gen = tf.placeholder('float32', [1, None, None, None, 1],
                                  name='t_image_input_to_SRGAN_generator')
     srgan_network = generator(input_gen=t_input_gen, kernel=3, nb=residual_blocks,
                               upscaling_factor=upsampling_factor, feature_size=feature_size, subpixel_NN=subpixel_NN,
@@ -471,7 +471,7 @@ def evaluate(upsampling_factor, residual_blocks, feature_size, checkpoint_dir_re
     print('{}{}'.format('Median PSNR: ', np.median(array_psnr)))
     print('{}{}'.format('Median SSIM: ', np.median(array_ssim)))
 
-
+"""
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Predict script')
     parser.add_argument('-path_prediction', help='Path to save training predictions')
@@ -497,3 +497,4 @@ if __name__ == '__main__':
               subpixel_NN=args.subpixel_NN, nn=args.nn, residual_blocks=int(args.residual_blocks),
               path_prediction=args.path_prediction, checkpoint_dir=args.checkpoint_dir, img_width=128,
               img_height=128, img_depth=92, batch_size=1, restore=args.restore)
+"""
