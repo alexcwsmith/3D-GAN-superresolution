@@ -3,49 +3,49 @@ import nibabel as nib
 import math
 import os
 from skimage.util import view_as_windows
-
+from skimage import io
 
 class Train_dataset(object):
     def __init__(self, batch_size, overlapping=1):
         self.batch_size = batch_size
-        self.data_path = '/imatge/isanchez/projects/neuro/ADNI-Screening-1.5T'
+        self.data_path = '/d2/studies/ImageGAN/3D-GAN-superresolution/images/'
         self.subject_list = os.listdir(self.data_path)
-        self.subject_list = np.delete(self.subject_list, 120)
-        self.heigth_patch = 112  # 128
-        self.width_patch = 112  # 128
-        self.depth_patch = 76  # 92
+     #   self.subject_list = np.delete(self.subject_list, 8)
+        self.heigth_patch = 256  # 128
+        self.width_patch = 512  # 128
+        self.depth_patch = 38  # 92
         self.margin = 16
         self.overlapping = overlapping
-        self.num_patches = (math.ceil((224 / (self.heigth_patch)) / (self.overlapping))) * (
-            math.ceil((224 / (self.width_patch)) / (self.overlapping))) * (
-                               math.ceil((152 / (self.depth_patch)) / (self.overlapping)))
+        self.num_patches = (math.ceil((512 / (self.heigth_patch)) / (self.overlapping))) * (
+            math.ceil((1024 / (self.width_patch)) / (self.overlapping))) * (
+                               math.ceil((76 / (self.depth_patch)) / (self.overlapping)))
 
     def mask(self, iteration):
         subject_batch = self.subject_list[iteration * self.batch_size:self.batch_size + (iteration * self.batch_size)]
-        subjects_true = np.empty([self.batch_size, 256, 256, 184])
+        subjects_true = np.empty([self.batch_size, 544, 1056, 108])
         i = 0
         for subject in subject_batch:
             if subject != 'ADNI_SCREENING_CLINICAL_FILE_08_02_17.csv':
                 filename = os.path.join(self.data_path, subject)
                 filename = os.path.join(filename, 'T1_brain_extractedBrainExtractionMask.nii.gz')
-                proxy = nib.load(filename)
+                proxy = io.imread(filename)
                 data = np.array(proxy.dataobj)
 
-                paddwidthr = int((256 - proxy.shape[0]) / 2)
-                paddheightr = int((256 - proxy.shape[1]) / 2)
-                paddepthr = int((184 - proxy.shape[2]) / 2)
+                paddwidthr = int((544 - proxy.shape[0]) / 2)
+                paddheightr = int((1056 - proxy.shape[1]) / 2)
+                paddepthr = int((108 - proxy.shape[2]) / 2)
 
-                if (paddwidthr * 2 + proxy.shape[0]) != 256:
+                if (paddwidthr * 2 + proxy.shape[0]) != 544:
                     paddwidthl = paddwidthr + 1
                 else:
                     paddwidthl = paddwidthr
 
-                if (paddheightr * 2 + proxy.shape[1]) != 256:
+                if (paddheightr * 2 + proxy.shape[1]) != 1056:
                     paddheightl = paddheightr + 1
                 else:
                     paddheightl = paddheightr
 
-                if (paddepthr * 2 + proxy.shape[2]) != 184:
+                if (paddepthr * 2 + proxy.shape[2]) != 108:
                     paddepthl = paddepthr + 1
                 else:
                     paddepthl = paddepthr
@@ -97,7 +97,7 @@ class Train_dataset(object):
 
     def data_true(self, iteration):
         subject_batch = self.subject_list[iteration * self.batch_size:self.batch_size + (iteration * self.batch_size)]
-        subjects = np.empty([self.batch_size, 224, 224, 152])
+        subjects = np.empty([self.batch_size, 512, 1024, 76])
         i = 0
         for subject in subject_batch:
             if subject != 'ADNI_SCREENING_CLINICAL_FILE_08_02_17.csv':
@@ -106,9 +106,9 @@ class Train_dataset(object):
                 proxy = nib.load(filename)
                 data = np.array(proxy.dataobj)
 
-                paddwidthr = int((256 - proxy.shape[0]) / 2)
-                paddheightr = int((256 - proxy.shape[1]) / 2)
-                paddepthr = int((184 - proxy.shape[2]) / 2)
+                paddwidthr = int((544 - proxy.shape[0]) / 2)
+                paddheightr = int((1056 - proxy.shape[1]) / 2)
+                paddepthr = int((108 - proxy.shape[2]) / 2)
 
                 if (paddwidthr * 2 + proxy.shape[0]) != 256:
                     paddwidthl = paddwidthr + 1
@@ -129,6 +129,6 @@ class Train_dataset(object):
                                      [(paddwidthl, paddwidthr), (paddheightl, paddheightr), (paddepthl, paddepthr)],
                                      'constant', constant_values=0)
 
-                subjects[i] = data_padded[16:240, 16:240, 16:168]  # remove background
+                subjects[i] = data_padded[16:528, 16:1040, 16:92]  # remove background
                 i = i + 1
         return subjects
